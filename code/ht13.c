@@ -55,9 +55,23 @@ int main() {
   int res;
   int nbytes;
   int f;
+  int r = 224;
+  int g = 28;
+  int b = 3;
   size_t write_index;
   uint8_t temp[3] = { };
   uint8_t dPack[96] = { };
+
+  uint8_t bytePack[96] = {r, g, b,  r, g, b,  r, g, b,  r, g, b,
+                          r, g, b,  r, g, b,  r, g, b,  r, g, b,
+                          r, g, b,  r, g, b,  r, g, b,  r, g, b,
+                          r, g, b,  r, g, b,  r, g, b,  r, g, b,
+                          r, g, b,  r, g, b,  r, g, b,  r, g, b,
+                          r, g, b,  r, g, b,  r, g, b,  r, g, b,
+                          r, g, b,  r, g, b,  r, g, b,  r, g, b,
+                          r, g, b,  r, g, b,  r, g, b,  r, g, b};
+                          
+
   uint8_t whitePack[96] = {255,255,215, 255,255,215, 255,255,215, 255,255,215, 
                            255,255,215, 255,255,215, 255,255,215, 255,255,215, 
                            255,255,215, 255,255,215, 255,255,215, 255,255,215, 
@@ -684,6 +698,7 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
   printw("[=marqee one way; ]=marqee the other;\n");
   printw("(=slow marqee one way; )=slow marqee the other;\n");
   printw("1=snowman1; 2=snowman2; 3=tree1; 4=tree2;\n");
+  printw("= is the new byte test\n");
   printw("\n");
   printw(" comma key <,> to stop loop\n");
   printw(" dot key <.> to quit");
@@ -744,6 +759,7 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
       } while (getch() != ',');  
       break;
 
+
     case 'd':  // dark
       nbytes = ftdi_write_data(ftdi, dPack, m);
       usleep(DAB);
@@ -799,6 +815,13 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
     case 'o':  // white on
       do {
         nbytes = ftdi_write_data(ftdi, whitePack, m);
+        usleep(DOT);
+      } while (getch() != ',');  
+      break;
+
+    case '=':  // new byte setup test
+      do {
+        nbytes = ftdi_write_data(ftdi, bytePack, m);
         usleep(DOT);
       } while (getch() != ',');  
       break;

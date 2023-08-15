@@ -16,8 +16,8 @@
 * 
 */
 
-int redPin = 3;
-int greenPin = 4;
+int redPin = 4;
+int greenPin = 3;
 int bluePin = 5;
 int pin_reset = 6;
 int pin_cs = 8;
@@ -49,7 +49,7 @@ void setup() {
   digitalWrite(A2, HIGH);
   digitalWrite(A3, HIGH);
 
-  setColor(0,0,0);
+  setColor(0);
   
   mrf.reset();
   mrf.init();
@@ -62,7 +62,8 @@ void setup() {
   attachInterrupt(0, interrupt_routine, CHANGE);
   interrupts();
   idVal = ~PINC & 0x0f;
-  startId = idVal * 3;
+  //Redundant but leaving for now
+  startId = idVal;
 }
 
 void interrupt_routine()
@@ -77,7 +78,8 @@ void loop()
 
 void handle_rx()
 {
-  setColor(mrf.get_rxinfo()->rx_data[startId],mrf.get_rxinfo()->rx_data[startId+1],mrf.get_rxinfo()->rx_data[startId+2]);
+  //setColor function changed to use less data for more numbers of glasses.
+  setColor(mrf.get_rxinfo()->rx_data[startId]);
   mrf.rx_flush();
 }
 
@@ -85,8 +87,50 @@ void handle_tx()
 {
 }
 
-void setColor(int red, int green, int blue)
+void setColor(int colorVal)
 {
+  //To make this work with a single integer we use AND statements and bit shifting.
+  //Given this byte: 11111111
+  //rrrgggbb 
+  //r = red color values: g = green color values: b = blue color values
+  
+  int red = (colorVal & 0b11100000);
+  red = (red >> 5);
+  //The colors must now be converted to appropriate rgb colors
+  if (red != 0)
+  {
+    red = 255;
+  }
+  else
+  {
+    red = 0;
+  }
+
+  int green = (colorVal & 0b00011100);
+  green = (green >> 2);
+  if(green != 0)
+  {
+    green = 255;
+  }
+  else
+  {
+    green = 0;
+  }
+
+
+  //blue is already at the value needed
+  int blue = (colorVal & 0b00000011);
+  if (blue != 0)
+  {
+    blue = 255;
+  }
+  else
+  {
+    blue = 0;
+  }
+
+
+
   SoftPWMSet(redPin, red);
   SoftPWMSet(greenPin, green);
   analogWrite(bluePin, blue);
