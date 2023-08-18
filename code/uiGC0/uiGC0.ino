@@ -37,45 +37,6 @@ void setup() {
   SoftPWMSetFadeTime(redPin, 10, 10);
   SoftPWMSetFadeTime(greenPin, 10, 10);
   
-  #include <SoftPWM_timer.h>
-#include <SoftPWM.h>
-
-#include "mrf24j.h"
-#include <SPI.h>
-
-/*
-* uiGC0 
-* Goofy Controller 0
-* common cathode LEDs +
-* Mrf24j40
-* 
-* Benjamin Jeffery
-* University of Idaho
-* 10/09/2015
-* 
-*/
-
-int redPin = 4;
-int greenPin = 3;
-int bluePin = 5;
-int pin_reset = 6;
-int pin_cs = 8;
-int pin_interrupt = 2;
-int idVal;
-int startId;
-
-Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
-
-void setup() {
-  DDRC = 0x00;
-  Serial.begin(9600);
-  SoftPWMBegin();
-  SoftPWMSet(redPin, 0);
-  SoftPWMSet(greenPin, 0);
-  pinMode(bluePin, OUTPUT);
-  SoftPWMSetFadeTime(redPin, 10, 10);
-  SoftPWMSetFadeTime(greenPin, 10, 10);
-  
   // The following pins are connected to the rotary or DIP switch that sets
   // the channel. They are all inputs, but we write to them to enable the
   // internal pullup resistor.
@@ -86,12 +47,18 @@ void setup() {
   pinMode(A3, INPUT);
   pinMode(A4, INPUT);
   pinMode(A5, INPUT);
+  DDRB = (DDRB | 0b00000010);
+  pinMode(A6, INPUT);
+  pinMode(A7, INPUT);
   digitalWrite(A0, HIGH);
   digitalWrite(A1, HIGH);
   digitalWrite(A2, HIGH);
   digitalWrite(A3, HIGH);
   digitalWrite(A4, HIGH);
   digitalWrite(A5, HIGH);
+  digitalWrite(A6, HIGH);
+  PORTB = (PORTB | 0b00000010);
+  digitalWrite(A7, HIGH);
   
   mrf.reset();
   mrf.init();
@@ -103,11 +70,9 @@ void setup() {
   
   attachInterrupt(0, interrupt_routine, CHANGE);
   interrupts();
-  idVal = digitalRead(22);
-  //digitalRead(PB1); 
-  //PORTC & 0b111111111;
-  //PC0 & 0b111111111;
-  //idVal = 95;
+  //Calculating the ID value by shifting bits
+  int dipSwitch7And8Val = ((~PINB & 0b00000110) << 5);
+  idVal = dipSwitch7And8Val + (~PINC & 0b00111111);
   //Redundant but leaving for now
   startId = idVal;
 }
@@ -146,7 +111,7 @@ void setColor(int colorVal)
   
   int red = (colorVal & 0b11100000);
   //The colors must now be converted to appropriate rgb colors
-  if ((colorVal - 224) == 0)
+  if (((colorVal >> 5) - 7) > 0)
   {
     red = 255;
   }
@@ -155,9 +120,9 @@ void setColor(int colorVal)
     red = 0;
   }
 
-  int green = (colorVal & 0b00011100);
+  int green = 0;
   //green = (green >> 2);
-  if((colorVal - 28) == 0)
+  if((((colorVal >> 2) - 7) & 0b00000111) > 0)
   {
     green = 255;
   }
@@ -166,10 +131,9 @@ void setColor(int colorVal)
     green = 0;
   }
 
-
+  int blue = 0;
   //blue is already at the value needed
-  int blue = (colorVal & 0b00000011);
-  if ((colorVal - 3) == 0)
+  if ((colorVal & 0b00000011) > 0)
   {
     blue = 255;
   }
