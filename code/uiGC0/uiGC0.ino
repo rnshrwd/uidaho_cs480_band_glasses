@@ -24,6 +24,9 @@ int pin_cs = 8;
 int pin_interrupt = 2;
 int idVal;
 int startId;
+int red = 0;
+int green = 0;
+int blue = 0;
 
 Mrf24j mrf(pin_reset, pin_cs, pin_interrupt);
 
@@ -107,11 +110,13 @@ void setColor(int colorVal)
   //r = red color values: g = green color values: b = blue color values
 
   Serial.println(colorVal);
+  if(colorVal == 255) {
+    return;
+  }
 
   
-  int red = (colorVal & 0b11100000);
   //The colors must now be converted to appropriate rgb colors
-  if (((colorVal >> 5) - 7) > 0)
+  if (((colorVal >> 5) - 7) == 0)
   {
     red = 255;
   }
@@ -120,9 +125,8 @@ void setColor(int colorVal)
     red = 0;
   }
 
-  int green = 0;
   //green = (green >> 2);
-  if((((colorVal >> 2) - 7) & 0b00000111) > 0)
+  if((((colorVal >> 2) - 7) & 0b00000111) == 0)
   {
     green = 255;
   }
@@ -131,9 +135,8 @@ void setColor(int colorVal)
     green = 0;
   }
 
-  int blue = 0;
   //blue is already at the value needed
-  if ((colorVal & 0b00000011) > 0)
+  if ((colorVal & 0b00000011) == 0)
   {
     blue = 255;
   }
