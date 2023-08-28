@@ -37,8 +37,8 @@
 //static size_t encode(const uint8_t* source, size_t size, uint8_t* destination);
 static size_t getEncodedBufferSize(size_t sourceSize);
 long millisec();
-uint8_t sorc[96] = { };
-uint8_t dest[96] = { };
+uint8_t sorc[108] = { };
+uint8_t dest[108] = { };
 
 void rotate13 (uint8_t arr[]);
 
@@ -61,16 +61,26 @@ int main() {
   int y = 252;
   size_t write_index;
   uint8_t temp[3] = { };
-  uint8_t dPack[96] = { };
+  uint8_t dPack[108] = { };
+  uint8_t dbytePack[108] = {0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                            0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                            0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                            0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                            0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                            0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                            0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                            0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                            0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0};
 
-  uint8_t bytePack[96] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  uint8_t bytePack[108] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  y, y, y,  g, g, g};
+                          0, 0, 0,  0, 0, 0,  y, y, y,  g, g, g,
+                          r, b, g,  r, g, r,  r, r, r,  r, r, y};
                           
 
   uint8_t whitePack[96] = {255,255,215, 255,255,215, 255,255,215, 255,255,215, 
@@ -823,8 +833,10 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
     case '=':  // new byte setup test
       do {
         nbytes = ftdi_write_data(ftdi, bytePack, m);
+        //printf("%ld\n", m);
         usleep(DOT);
       } while (getch() != ',');  
+      nbytes = ftdi_write_data(ftdi, dbytePack, m);
       break;
 
     case 'p':  // rainbow med
@@ -1131,7 +1143,7 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
     default:
       usleep(DAB);
     }
-    nbytes = ftdi_write_data(ftdi, dPack, m);
+    nbytes = ftdi_write_data(ftdi, dbytePack, m);
    // Draw a space over current character
     move(14,0);
     printw(" ");
@@ -1180,6 +1192,6 @@ void rotate13 (uint8_t arr[]) {
 static size_t getEncodedBufferSize(size_t sourceSize) {
   size_t s;
   s = sourceSize + sourceSize / 254 + 1;
-  //printf("buffer size is : %zd.\n", s);
+  printf("buffer size is : %zd.\n", s);
   return s;
 }

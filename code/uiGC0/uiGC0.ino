@@ -136,7 +136,7 @@ void setColor(int colorVal)
   }
 
   //blue is already at the value needed
-  if ((colorVal & 0b00000011) == 0)
+  if ((colorVal & 0b00000011) == 3)
   {
     blue = 255;
   }
