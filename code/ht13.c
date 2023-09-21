@@ -80,7 +80,7 @@ int main() {
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  y, y, y,  g, g, g,
-                          r, b, g,  r, g, r,  r, r, r,  r, r, y};
+                          r, b, g,  y, g, r,  r, r, r,  r, r, y};
                           
 
   uint8_t whitePack[96] = {255,255,215, 255,255,215, 255,255,215, 255,255,215, 
@@ -636,13 +636,14 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
   }
 
   // detect connected ftdi device(s)
-  if ((res = ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6015)) <0) {
+  if (((ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6015)) < 1) && ((ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6001)) < 1)) {
     fprintf(stderr, "no ftdi devices found\n");
     fflush(stderr);
     ftdi_list_free(&devlist);
     ftdi_free(ftdi);
     return 1;
   } else {
+    res = 1;
     fprintf(stderr, "%d ftdi devices found.\n", res);
   }
 

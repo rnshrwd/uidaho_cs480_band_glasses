@@ -66,7 +66,7 @@ void setup() {
   mrf.reset();
   mrf.init();
   mrf.set_pan(2015);
-  mrf.set_channel(0x0C);
+  //mrf.set_channel(0x0C);
   mrf.address16_write(0x4202);
   mrf.set_promiscuous(true);
   mrf.set_bufferPHY(true);
@@ -74,7 +74,14 @@ void setup() {
   attachInterrupt(0, interrupt_routine, CHANGE);
   interrupts();
   //Calculating the ID value by shifting bits
-  int dipSwitch7And8Val = ((~PINB & 0b00000110) << 5);
+  int dipSwitch7And8Val = ((~PINB & 0b00000010) << 5);
+  int signalToRead = ((~PINB & 0b00000100) >> 2);
+  if(signalToRead == 0) {
+    mrf.set_channel(0x0C);
+  }
+  else  {
+    mrf.set_channel(0x0D);
+  }
   idVal = dipSwitch7And8Val + (~PINC & 0b00111111);
   //Redundant but leaving for now
   startId = idVal;
