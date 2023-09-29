@@ -43,8 +43,8 @@ uint8_t dest[108] = { };
 void rotate13 (uint8_t arr[]);
 
 int main() {
-  struct ftdi_context *ftdi;
-  struct ftdi_device_list *devlist, *curdev;
+  struct ftdi_context *ftdi, *ftdi_2;
+  struct ftdi_device_list *devlist, *curdev, *devlist_2, *curdev_2;
   char manufacturer[128], description[128];
   int retval = EXIT_SUCCESS;
   char letter;
@@ -81,7 +81,26 @@ int main() {
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  y, y, y,  g, g, g,
                           r, b, g,  y, g, r,  r, r, r,  r, r, y};
+
+  uint8_t testPack[108] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  g, g, g,  g, g, g,
+                          g, g, g,  g, g, g,  g, g, g,  g, g, g};                        
                           
+  uint8_t testPack_2[108] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  r, r, r,  r, r, r,
+                          r, r, r,  r, r, r,  r, r, r,  r, r, r};
 
   uint8_t whitePack[96] = {255,255,215, 255,255,215, 255,255,215, 255,255,215, 
                            255,255,215, 255,255,215, 255,255,215, 255,255,215, 
@@ -634,32 +653,60 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
     } else {
     fprintf(stderr, "ftdi_new success\n");
   }
+  // initialize second ftdi device
+  if ((ftdi_2 = ftdi_new()) == 0) {
+      fprintf(stderr, "ftdi_new failed\n");
+      return EXIT_FAILURE;
+    } else {
+    fprintf(stderr, "ftdi_new success\n");
+  }
 
   // detect connected ftdi device(s)
-  if (((ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6015)) < 1) && ((ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6001)) < 1)) {
+  if (((ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6015)) < 1) && ((ftdi_usb_find_all(ftdi_2, &devlist_2, 0x0403, 0x6001)) < 1)) {
     fprintf(stderr, "no ftdi devices found\n");
     fflush(stderr);
     ftdi_list_free(&devlist);
+    ftdi_list_free(&devlist_2);
     ftdi_free(ftdi);
+    ftdi_free(ftdi_2);
     return 1;
   } else {
-    res = 1;
+    res = 0;
+      if(ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6015) > 0) {
+        res++;
+      }
+      if(ftdi_usb_find_all(ftdi_2, &devlist_2, 0x0403, 0x6001) > 0) {
+        res++;
+      }
     fprintf(stderr, "%d ftdi devices found.\n", res);
   }
 
+  ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6015);
   // loop through detected devices and attempt to get their information
-  i = 0;
-  for (curdev = devlist; curdev != NULL; i++) {
-    printf("Checking device: %d\n", i);
+  curdev = devlist;
+    printf("Checking device: 1\n");
     if ((ret = ftdi_usb_get_strings(ftdi, curdev->dev, manufacturer, 128, description, 128, NULL, 0)) < 0) {
       fprintf(stderr, "ftdi_usb_get_strings failed: %d (%s)\n", ret, ftdi_get_error_string(ftdi));
       retval = EXIT_FAILURE;
       ftdi_list_free(&devlist);
       ftdi_free(ftdi);
     }
-    printf("Manufacturer: %s, Description: %s\n\n", manufacturer, description);
+    printf("Device One: Manufacturer: %s, Description: %s\n\n", manufacturer, description);
     curdev = curdev->next;
-  }
+
+    curdev_2 = devlist_2;
+
+    ftdi_usb_find_all(ftdi_2, &devlist_2, 0x0403, 0x6001);
+    printf("Checking device: 2\n");
+    if ((ret = ftdi_usb_get_strings(ftdi_2, curdev_2->dev, manufacturer, 128, description, 128, NULL, 0)) < 0) {
+      fprintf(stderr, "ftdi_usb_get_strings failed: %d (%s)\n", ret, ftdi_get_error_string(ftdi));
+      retval = EXIT_FAILURE;
+      ftdi_list_free(&devlist_2);
+      ftdi_free(ftdi_2);
+    }
+    printf("Device Two: Manufacturer: %s, Description: %s\n\n", manufacturer, description);
+    
+    curdev_2 = curdev_2->next;
 
   // open ftdi context
   if ((ret = ftdi_usb_open_dev(ftdi, devlist->dev)) < 0)
@@ -672,6 +719,16 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
     fprintf(stderr, "ftdi_open successful\n");
   }
 
+  if ((ret = ftdi_usb_open_dev(ftdi_2, devlist_2->dev)) < 0)
+    {
+      fprintf(stderr, "unable to open ftdi: %d (%s)\n", ret, ftdi_get_error_string(ftdi));
+      ftdi_free(ftdi);
+      return ret;            
+    }
+  else {
+    fprintf(stderr, "ftdi_open two successful\n");
+  }
+
   // set the base bitrate/baudrate of the device(s)
   ret = ftdi_set_baudrate(ftdi, 57600);
   if (ret < 0) {
@@ -680,6 +737,15 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
     printf("baudrate set.\n");
   }
 
+  ret = ftdi_set_baudrate(ftdi_2, 57600);
+  if (ret < 0) {
+    fprintf(stderr, "unable to set baud rate: %d (%s).\n", ret, ftdi_get_error_string(ftdi_2));
+  } else {
+    printf("baudrate set.\n");
+  }
+  
+
+
   // set parameters in the devices
   f = ftdi_set_line_property(ftdi, 8, STOP_BIT_1, NONE);
   if(f < 0) {
@@ -687,8 +753,16 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
   } else {
     printf("line parameters set.\n");
   }
+  f = ftdi_set_line_property(ftdi_2, 8, STOP_BIT_1, NONE);
+  if(f < 0) {
+    fprintf(stderr, "unable to set line parameters: %d (%s).\n", ret, ftdi_get_error_string(ftdi));
+  } else {
+    printf("line parameters set.\n");
+  }
+  
 
   ftdi_list_free(&devlist);
+  ftdi_list_free(&devlist_2);
   printf("broadcasting.\n");
 
   //open curses session for display purposes
@@ -833,10 +907,12 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
 
     case '=':  // new byte setup test
       do {
-        nbytes = ftdi_write_data(ftdi, bytePack, m);
+        nbytes = ftdi_write_data(ftdi, testPack, m);
+        nbytes = ftdi_write_data(ftdi_2, testPack_2, m);
         //printf("%ld\n", m);
         usleep(DOT);
       } while (getch() != ',');  
+      nbytes = ftdi_write_data(ftdi_2, dbytePack, m);
       nbytes = ftdi_write_data(ftdi, dbytePack, m);
       break;
 
