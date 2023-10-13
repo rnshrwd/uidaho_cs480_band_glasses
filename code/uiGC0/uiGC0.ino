@@ -74,7 +74,7 @@ void setup() {
   attachInterrupt(0, interrupt_routine, CHANGE);
   interrupts();
   //Calculating the ID value by shifting bits
-  int dipSwitch7And8Val = ((~PINB & 0b00000010) << 5);
+  int dipSwitch7 = ((~PINB & 0b00000010) << 5);
   int signalToRead = ((~PINB & 0b00000100) >> 2);
   if(signalToRead == 0) {
     mrf.set_channel(0x0C);
@@ -82,7 +82,7 @@ void setup() {
   else  {
     mrf.set_channel(0x0D);
   }
-  idVal = dipSwitch7And8Val + (~PINC & 0b00111111);
+  idVal = dipSwitch7 + (~PINC & 0b00111111);
   //Redundant but leaving for now
   startId = idVal;
 }

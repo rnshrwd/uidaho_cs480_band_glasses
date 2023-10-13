@@ -645,12 +645,14 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
   size_t n = sizeof(whitePack);
   size_t l = sizeof(dest);
   size_t m = getEncodedBufferSize(l);
+  struct ftdi_context *ftdi_array[2];
 
   // initialize new ftdi device
   if ((ftdi = ftdi_new()) == 0) {
       fprintf(stderr, "ftdi_new failed\n");
       return EXIT_FAILURE;
     } else {
+      ftdi_array[0] = ftdi;
     fprintf(stderr, "ftdi_new success\n");
   }
   // initialize second ftdi device
