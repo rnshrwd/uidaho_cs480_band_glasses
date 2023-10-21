@@ -43,8 +43,8 @@ uint8_t dest[108] = { };
 void rotate13 (uint8_t arr[]);
 
 int main() {
-  struct ftdi_context *ftdi, *ftdi_2;
-  struct ftdi_device_list *devlist, *curdev, *devlist_2, *curdev_2;
+  struct ftdi_context *ftdi;
+  struct ftdi_device_list *devlist, *curdev;
   char manufacturer[128], description[128];
   int retval = EXIT_SUCCESS;
   char letter;
@@ -72,36 +72,16 @@ int main() {
                             0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                             0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0};
 
-  uint8_t bytePack[108] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  y, y, y,  g, g, g,
-                          r, b, g,  y, g, r,  r, r, r,  r, r, y};
-
-  uint8_t testPack[108] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  g, g, g,  g, g, g,
-                          g, g, g,  g, g, g,  g, g, g,  g, g, g};                        
+   uint8_t testPack[108] = {y,y,y,  r, r, g,  r, g, g,  r, g, g,
+                          r, r, g,  g, g, g,  g, g, g,  g, g, g,
+                          g, g, g,  g, g, g,  g, g, g,  g, g, g,
+                          g, g, g,  g, g, g,  g, g, g,  g, g, g,
+                          g, g, g,  g, g, g,  g, g, g,  g, g, g,
+                          g, g, g,  g, g, g,  g, g, g,  g, g, g,
+                          g, g, g,  g, g, g,  g, g, g,  g, g, g,
+                          g, g, g,  g, g, g,  g, g, g,  g, g, g,
+                          g, g, g,  g, g, g,  g, g, g,  r, g, g};
                           
-  uint8_t testPack_2[108] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
-                          0, 0, 0,  0, 0, 0,  r, r, r,  r, r, r,
-                          r, r, r,  r, r, r,  r, r, r,  r, r, r};
-
   uint8_t whitePack[96] = {255,255,215, 255,255,215, 255,255,215, 255,255,215, 
                            255,255,215, 255,255,215, 255,255,215, 255,255,215, 
                            255,255,215, 255,255,215, 255,255,215, 255,255,215, 
@@ -645,108 +625,38 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
   size_t n = sizeof(whitePack);
   size_t l = sizeof(dest);
   size_t m = getEncodedBufferSize(l);
-  struct ftdi_context * ftdi_devices[2];
-  struct ftdi_device_list * ftdi_device_list[2];
-  // initialize two new ftdi devices
+
+  // initialize new ftdi device
   if ((ftdi = ftdi_new()) == 0) {
       fprintf(stderr, "ftdi_new failed\n");
       return EXIT_FAILURE;
     } else {
-      ftdi_array[0] = ftdi;
     fprintf(stderr, "ftdi_new success\n");
-  }
-  // initialize second ftdi device
-  if ((ftdi_2 = ftdi_new()) == 0) {
-      fprintf(stderr, "ftdi_new failed\n");
-      return EXIT_FAILURE;
-    } else {
-    fprintf(stderr, "ftdi_new success\n");
-  }
-
-
-  //Loop through the array and detect each ftdi device
-  for(int i = 0; i < 2; i++)  {
-    if (ftdi_usb_find_all(ftdi_devices[i], &ftdi_device_list[i], 0x0403, 0x6015) < 1) {
-      if(ftdi_usb_find_all(ftdi_devices[i], &ftdi_device_list[i], 0x0403, 0x6001) < 1)  {
-        printf("no ftdi devices found for ftdi device slot %d\n", i);
-      }  
-    }
-    printf("\n%d\n", i);
   }
 
   // detect connected ftdi device(s)
-  if (((ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6015)) < 1) && ((ftdi_usb_find_all(ftdi_2, &devlist_2, 0x0403, 0x6001)) < 1)) {
+  if ((res = ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6001)) <0) {
     fprintf(stderr, "no ftdi devices found\n");
     fflush(stderr);
     ftdi_list_free(&devlist);
-    ftdi_list_free(&devlist_2);
     ftdi_free(ftdi);
-    ftdi_free(ftdi_2);
     return 1;
   } else {
-    res = 0;
-      if(ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6015) > 0) {
-        res++;
-      }
-      if(ftdi_usb_find_all(ftdi_2, &devlist_2, 0x0403, 0x6001) > 0) {
-        res++;
-      }
     fprintf(stderr, "%d ftdi devices found.\n", res);
   }
 
-  //Track the currently assigned device number
-  int device_number = 0;
-
-  ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6015);
   // loop through detected devices and attempt to get their information
-  // This should loop though all FTDI devices that have the VID:PID of 0x403:0x6015
   i = 0;
   for (curdev = devlist; curdev != NULL; i++) {
-      printf("Checking device: 1\n");
-      if ((ret = ftdi_usb_get_strings(ftdi, curdev->dev, manufacturer, 128, description, 128, NULL, 0)) < 0) {
-        fprintf(stderr, "ftdi_usb_get_strings failed: %d (%s)\n", ret, ftdi_get_error_string(ftdi));
-        retval = EXIT_FAILURE;
-        ftdi_list_free(&devlist);
-        ftdi_free(ftdi);
-      }
-      else  {
-        ftdi_devices[device_number] = ftdi;
-        ftdi_device_list[device_number] = curdev;
-        device_number++;
-      }
-    printf("Device One: Manufacturer: %s, Description: %s\n\n", manufacturer, description);
-    curdev = curdev->next;
+    printf("Checking device: %d\n", i);
+    if ((ret = ftdi_usb_get_strings(ftdi, curdev->dev, manufacturer, 128, description, 128, NULL, 0)) < 0) {
+      fprintf(stderr, "ftdi_usb_get_strings failed: %d (%s)\n", ret, ftdi_get_error_string(ftdi));
+      retval = EXIT_FAILURE;
+      ftdi_list_free(&devlist);
+      ftdi_free(ftdi);
     }
-
-    
-  ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6001);
-  i = 0;
-  for (curdev = devlist; curdev != NULL; i++) {
-      printf("Checking device: 2\n");
-      if ((ret = ftdi_usb_get_strings(ftdi, curdev->dev, manufacturer, 128, description, 128, NULL, 0)) < 0) {
-        fprintf(stderr, "ftdi_usb_get_strings failed: %d (%s)\n", ret, ftdi_get_error_string(ftdi));
-        retval = EXIT_FAILURE;
-        ftdi_list_free(&devlist);
-        ftdi_free(ftdi);
-      }
-      else  {
-        ftdi_devices[device_number] = ftdi;
-        ftdi_device_list[device_number] = curdev;
-        device_number++;
-      }
-    printf("Device Two: Manufacturer: %s, Description: %s\n\n", manufacturer, description);
+    printf("Manufacturer: %s, Description: %s\n\n", manufacturer, description);
     curdev = curdev->next;
-  }
-
-  //convert back to seperate ftdi contexts (might be unnecessary)
-  ftdi = ftdi_devices[0];
-  devlist = ftdi_device_list[0];
-  ftdi_2 = ftdi_devices[1];
-  devlist_2 = ftdi_device_list[1];
-
-  bool two_devices = true;
-  if(device_number < 2) {
-    two_devices = false;
   }
 
   // open ftdi context
@@ -768,33 +678,6 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
     printf("baudrate set.\n");
   }
 
-if(two_devices == true) {
-    if ((ret = ftdi_usb_open_dev(ftdi_2, devlist_2->dev)) < 0)
-      {
-        fprintf(stderr, "unable to open ftdi: %d (%s)\n", ret, ftdi_get_error_string(ftdi_2));
-        ftdi_free(ftdi_2);
-        return ret;            
-      }
-    else {
-      fprintf(stderr, "ftdi_open two successful\n");
-    }
-
-    ret = ftdi_set_baudrate(ftdi_2, 57600);
-    if (ret < 0) {
-    fprintf(stderr, "unable to set baud rate: %d (%s).\n", ret, ftdi_get_error_string(ftdi_2));
-    } else {
-      printf("baudrate set.\n");
-    }
-
-    f = ftdi_set_line_property(ftdi_2, 8, STOP_BIT_1, NONE);
-    if(f < 0) {
-      fprintf(stderr, "unable to set line parameters: %d (%s).\n", ret, ftdi_get_error_string(ftdi));
-    } else {
-      printf("line parameters set.\n");
-    }
-  }
-
-
   // set parameters in the devices
   f = ftdi_set_line_property(ftdi, 8, STOP_BIT_1, NONE);
   if(f < 0) {
@@ -802,10 +685,8 @@ if(two_devices == true) {
   } else {
     printf("line parameters set.\n");
   }
-  
 
   ftdi_list_free(&devlist);
-  ftdi_list_free(&devlist_2);
   printf("broadcasting.\n");
 
   //open curses session for display purposes
@@ -827,7 +708,6 @@ if(two_devices == true) {
   printw("[=marqee one way; ]=marqee the other;\n");
   printw("(=slow marqee one way; )=slow marqee the other;\n");
   printw("1=snowman1; 2=snowman2; 3=tree1; 4=tree2;\n");
-  printw("= is the new byte test\n");
   printw("\n");
   printw(" comma key <,> to stop loop\n");
   printw(" dot key <.> to quit");
@@ -887,7 +767,6 @@ if(two_devices == true) {
         usleep(SLP);
       } while (getch() != ',');  
       break;
-
 
     case 'd':  // dark
       nbytes = ftdi_write_data(ftdi, dPack, m);
@@ -951,17 +830,12 @@ if(two_devices == true) {
     case '=':  // new byte setup test
       do {
         nbytes = ftdi_write_data(ftdi, testPack, m);
-        if(two_devices == true) {
-          nbytes = ftdi_write_data(ftdi_2, testPack_2, m);
-        }
-        //printf("%ld\n", m);
         usleep(DOT);
       } while (getch() != ',');  
       nbytes = ftdi_write_data(ftdi, dbytePack, m);
-      if(two_devices == true) {
-        nbytes = ftdi_write_data(ftdi_2, dbytePack, m);
-      }
       break;
+
+    
 
     case 'p':  // rainbow med
       nbytes = ftdi_write_data(ftdi, rain5Pack, m);
@@ -1241,6 +1115,7 @@ if(two_devices == true) {
           else sorc[i] = temp[i%3];
         }
 	      nbytes = ftdi_write_data(ftdi, sorc, m);
+        
         usleep(SLOW);
       } while (getch() != ',');  
       break;
@@ -1267,6 +1142,7 @@ if(two_devices == true) {
     default:
       usleep(DAB);
     }
+    nbytes = ftdi_write_data(ftdi, dPack, m);
     nbytes = ftdi_write_data(ftdi, dbytePack, m);
    // Draw a space over current character
     move(14,0);
@@ -1313,14 +1189,9 @@ void rotate13 (uint8_t arr[]) {
 
   } // END rotate12
 
-
 static size_t getEncodedBufferSize(size_t sourceSize) {
   size_t s;
   s = sourceSize + sourceSize / 254 + 1;
-  printf("buffer size is : %zd.\n", s);
+  //printf("buffer size is : %zd.\n", s);
   return s;
-}
-
-bool find_ftdi()  {
-
 }
