@@ -82,7 +82,7 @@ int main() {
                           0, 0, 0,  0, 0, 0,  y, y, y,  g, g, g,
                           r, b, g,  y, g, r,  r, r, r,  r, r, y};
 
-  uint8_t testPack[108] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  uint8_t testPack[108] = {r, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
@@ -90,7 +90,25 @@ int main() {
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  g, g, g,  g, g, g,
-                          g, g, g,  g, g, g,  g, g, g,  g, g, g};                        
+                          g, g, g,  g, g, g,  g, g, g,  g, g, g};  
+  uint8_t testPack_3[108] = {g, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  g, g, g,  g, g, g,
+                          g, g, g,  g, g, g,  g, g, g,  g, g, g};
+  uint8_t testPack_4[108] = {b, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+                          0, 0, 0,  0, 0, 0,  g, g, g,  g, g, g,
+                          g, g, g,  g, g, g,  g, g, g,  g, g, g};                      
                           
   uint8_t testPack_2[108] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
@@ -652,7 +670,6 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
       fprintf(stderr, "ftdi_new failed\n");
       return EXIT_FAILURE;
     } else {
-      ftdi_array[0] = ftdi;
     fprintf(stderr, "ftdi_new success\n");
   }
   // initialize second ftdi device
@@ -684,14 +701,7 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
     ftdi_free(ftdi_2);
     return 1;
   } else {
-    res = 0;
-      if(ftdi_usb_find_all(ftdi, &devlist, 0x0403, 0x6015) > 0) {
-        res++;
-      }
-      if(ftdi_usb_find_all(ftdi_2, &devlist_2, 0x0403, 0x6001) > 0) {
-        res++;
-      }
-    fprintf(stderr, "%d ftdi devices found.\n", res);
+
   }
 
   //Track the currently assigned device number
@@ -710,9 +720,17 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
         ftdi_free(ftdi);
       }
       else  {
-        ftdi_devices[device_number] = ftdi;
-        ftdi_device_list[device_number] = curdev;
-        device_number++;
+        if(device_number == 0)  {
+          ftdi_devices[device_number] = ftdi;
+          ftdi_device_list[device_number] = curdev;
+          device_number++;
+        }
+        else {
+          ftdi_usb_find_all(ftdi_2, &devlist_2, 0x0403, 0x6001);
+          ftdi_devices[device_number] = ftdi_2;
+          ftdi_device_list[device_number] = devlist_2->next;
+          device_number++;
+        }
       }
     printf("Device One: Manufacturer: %s, Description: %s\n\n", manufacturer, description);
     curdev = curdev->next;
@@ -730,9 +748,17 @@ uint8_t rain16Pack[96] = {255,0,0, 0,255,0, 0,0,255, 255,255,0,
         ftdi_free(ftdi);
       }
       else  {
-        ftdi_devices[device_number] = ftdi;
-        ftdi_device_list[device_number] = curdev;
-        device_number++;
+        if(device_number == 0)  {
+          ftdi_devices[device_number] = ftdi;
+          ftdi_device_list[device_number] = curdev;
+          device_number++;
+        }
+        else {
+          ftdi_usb_find_all(ftdi_2, &devlist_2, 0x0403, 0x6001);
+          ftdi_devices[device_number] = ftdi_2;
+          ftdi_device_list[device_number] = devlist_2->next;
+          device_number++;
+        }
       }
     printf("Device Two: Manufacturer: %s, Description: %s\n\n", manufacturer, description);
     curdev = curdev->next;
@@ -805,7 +831,9 @@ if(two_devices == true) {
   
 
   ftdi_list_free(&devlist);
-  ftdi_list_free(&devlist_2);
+  if(two_devices == true) {
+    ftdi_list_free(&devlist_2);
+  }
   printf("broadcasting.\n");
 
   //open curses session for display purposes
