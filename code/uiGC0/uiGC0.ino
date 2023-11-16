@@ -16,8 +16,8 @@
 * 
 */
 
-int redPin = 4;
-int greenPin = 3;
+int redPin = 3;
+int greenPin = 4;
 int bluePin = 5;
 int pin_reset = 6;
 int pin_cs = 8;
@@ -36,6 +36,7 @@ void setup() {
   SoftPWMBegin();
   SoftPWMSet(redPin, 0);
   SoftPWMSet(greenPin, 0);
+  //pinMode(redPin, OUTPUT);
   pinMode(bluePin, OUTPUT);
   SoftPWMSetFadeTime(redPin, 10, 10);
   SoftPWMSetFadeTime(greenPin, 10, 10);
@@ -74,7 +75,7 @@ void setup() {
   attachInterrupt(0, interrupt_routine, CHANGE);
   interrupts();
   //Calculating the ID value by shifting bits
-  int dipSwitch7 = ((~PINB & 0b00000010) << 5);
+  int dipSwitch7And8Val = ((~PINB & 0b00000010) << 5);
   int signalToRead = ((~PINB & 0b00000100) >> 2);
   if(signalToRead == 0) {
     mrf.set_channel(0x0C);
@@ -82,7 +83,7 @@ void setup() {
   else  {
     mrf.set_channel(0x0D);
   }
-  idVal = dipSwitch7 + (~PINC & 0b00111111);
+  idVal = dipSwitch7And8Val + (~PINC & 0b00111111);
   //Redundant but leaving for now
   startId = idVal;
 }
@@ -94,7 +95,7 @@ void interrupt_routine()
 
 void loop()
 {
-  Serial.println(idVal);
+  //Serial.println(idVal);
     mrf.check_flags(&handle_rx, &handle_tx);
 }
 
@@ -111,6 +112,7 @@ void handle_tx()
 
 void setColor(int colorVal)
 {
+  
   //To make this work with a single integer we use AND statements and bit shifting.
   //Given this byte: 11111111
   //rrrgggbb 
@@ -121,42 +123,40 @@ void setColor(int colorVal)
     return;
   }
 
-  
-  //The colors must now be converted to appropriate rgb colors
-  if (((colorVal >> 5) - 7) == 0)
-  {
-    red = 255;
-  }
-  else
-  {
-    red = 0;
-  }
+  // color selection based on case statement
+  int pickcolor = colorVal;
 
-  //green = (green >> 2);
-  if((((colorVal >> 2) - 7) & 0b00000111) == 0)
-  {
-    green = 255;
-  }
-  else
-  {
+  //Set brightness of colors, values 1-255. (where 1 is the lowest, and 255 is the highest) 
+  int brightness = 10;
+ 
+ switch (pickcolor) { 
+    
+ case 224: //224 = Red
+    red = brightness;
+    break;
+     
+ case 28: // 28 = Green
+    green = brightness;
+    break; 
+
+ case 3: // 3 = Blue
+    blue = brightness;
+    break;
+      
+ case 252: // 224+28 = 252 Yellow
+    red = brightness; 
+    green = brightness;
+    break; 
+          
+ default: 
+    red = 0; 
     green = 0;
-  }
-
-  //blue is already at the value needed
-  if ((colorVal & 0b00000011) == 3)
-  {
-    blue = 255;
-  }
-  else
-  {
-    blue = 0;
-  }
-
+    blue = 0;   
+    break; 
+  } 
 
 
   SoftPWMSet(redPin, red);
   SoftPWMSet(greenPin, green);
   analogWrite(bluePin, blue);
 }
-
-
