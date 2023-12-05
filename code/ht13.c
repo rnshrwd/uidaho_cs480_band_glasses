@@ -21,6 +21,8 @@
 #include <ftdi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
 #include <unistd.h>
 /* #include <time.h> */
 /* #include <sys/times.h> */
@@ -40,11 +42,16 @@ long millisec();
 uint8_t sorc[108] = { };
 uint8_t dest[108] = { };
 
+uint8_t create_patterns(char *glasses_information, uint8_t***, int**, int z); 
+static int parse_ext(const struct dirent *dir);
+
 void rotate13 (uint8_t arr[]);
 
 int main() {
   struct ftdi_context *ftdi, *ftdi_2;
   struct ftdi_device_list *devlist, *curdev, *devlist_2, *curdev_2;
+  ftdi_free(ftdi);
+  ftdi_free(ftdi_2);
   char manufacturer[128], description[128];
   int retval = EXIT_SUCCESS;
   char letter;
@@ -72,7 +79,7 @@ int main() {
                             0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                             0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0};
 
-  uint8_t bytePack[108] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  uint8_t bytePack[108] = {y, y, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
@@ -82,7 +89,7 @@ int main() {
                           0, 0, 0,  0, 0, 0,  y, y, y,  g, g, g,
                           r, b, g,  y, g, r,  r, r, r,  r, r, y};
 
-  uint8_t testPack[108] = {r, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  uint8_t testPack[108] = {r, r, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
@@ -91,7 +98,7 @@ int main() {
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  g, g, g,  g, g, g,
                           g, g, g,  g, g, g,  g, g, g,  g, g, g};  
-  uint8_t testPack_3[108] = {g, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  uint8_t testPack_3[108] = {g, g, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
@@ -100,7 +107,7 @@ int main() {
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  g, g, g,  g, g, g,
                           g, g, g,  g, g, g,  g, g, g,  g, g, g};
-  uint8_t testPack_4[108] = {b, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  uint8_t testPack_4[108] = {b, b, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
@@ -110,7 +117,7 @@ int main() {
                           0, 0, 0,  0, 0, 0,  g, g, g,  g, g, g,
                           g, g, g,  g, g, g,  g, g, g,  g, g, g};                      
                           
-  uint8_t testPack_2[108] = {y, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
+  uint8_t testPack_2[108] = {y, y, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
                           0, 0, 0,  0, 0, 0,  0, 0, 0,  0, 0, 0,
@@ -836,6 +843,8 @@ if(two_devices == true) {
   }
   printf("broadcasting.\n");
 
+  FILE * test_file = fopen("test_ht13", "r");
+
   //open curses session for display purposes
   initscr();
   raw();
@@ -843,6 +852,120 @@ if(two_devices == true) {
   nodelay(stdscr, TRUE);
   noecho();
   attron(A_BOLD);
+  
+
+  //LEAVING OFF HERE it can now read an entire file but can't differentiate between patterns and time is not yet being saved.
+  FILE *fp;
+  long lSize;
+  char *glasses_information;
+//Read all files in folder searching for ht13 files
+struct dirent **namelist;
+struct dirent **filtered_list;
+int z;
+
+z = scandir(".", &namelist, parse_ext, alphasort);
+if (z < 0) {
+  perror("scandir");
+  return 1;
+}
+else  {
+
+}
+//dimensions of the 3-d array
+// For the information being collected there are z blocks of 2-d arrays, 30 rows max of patterns and 108 addresses per pattern.
+//Allocate memory blocks based on number of files here **********************************
+uint8_t ***test_converted_ht13 = (uint8_t***)malloc(z * sizeof(uint8_t**));
+if (test_converted_ht13 == NULL)
+{
+  fprintf(stderr, "Not enough memory available");
+  exit(0);
+} 
+
+for (int i = 0; i < z; i++)
+{
+  //30 is used here as a placeholder for maximum number of patterns allowed.
+  test_converted_ht13[i] = (uint8_t**)malloc(30 * sizeof(uint8_t*));
+  if (test_converted_ht13[i] == NULL)
+  {
+    fprintf(stderr, "Not enough memory available");
+    exit(0);
+  }
+  //110 slots of memory are available to enable reading of the time.
+  for (int q = 0; q < 110; q++)
+  {
+    test_converted_ht13[i][q] = (uint8_t*)malloc(108 * sizeof(uint8_t));
+    if (test_converted_ht13[i][q] == NULL)  
+    {
+      fprintf(stderr, "Out of memory");
+      exit(0);
+    }
+  }
+}
+//Allocate memory in the same way to hold the time values minus the step involving an extra 108 slots
+int *time_converted_ht13[z];
+
+if (time_converted_ht13 == NULL)
+{
+  fprintf(stderr, "Not enough memory available");
+  exit(0);
+} 
+
+for (int i = 0; i < z; i++)
+{
+  //30 is used here as a placeholder for maximum number of patterns allowed.
+  time_converted_ht13[i] = (int*)malloc(30 * sizeof(int));
+  if (time_converted_ht13[i] == NULL)
+  {
+    fprintf(stderr, "Not enough memory available");
+    exit(0);
+  }
+}
+
+int pattern_total = 0;
+//for all ht13 files make a pattern
+while (z--) {
+    printw("%s\n", namelist[z]->d_name);
+
+
+  fp = fopen ( namelist[z]->d_name , "r" );
+  if( !fp ) perror("ht13 file failed to open"),exit(1);
+
+  fseek( fp , 0L , SEEK_END);
+  lSize = ftell( fp );
+  rewind( fp );
+
+  /* allocate memory for entire content */
+  glasses_information = calloc( 1, lSize+1 );
+  if( !glasses_information ) fclose(fp),fputs("memory alloc fails",stderr),exit(1);
+
+  /* copy the file into the buffer */
+  if( 1!=fread( glasses_information , lSize, 1 , fp) )
+    fclose(fp),free(glasses_information),fputs("entire read fails",stderr),exit(1);
+
+  //This should be looped based on which file the program is on.
+  create_patterns(glasses_information, test_converted_ht13, time_converted_ht13, z);
+}
+for (int i = 0; i < 108; i++) {
+    printw("%i ", test_converted_ht13[0][0][i]);
+}
+    printw("\n");
+    printw("TIME: %d pattern 1, %d pattern 2", time_converted_ht13[0][0], time_converted_ht13[0][1]);
+    printw("\n");
+  /*for (int i = 0; i < 108; i++) {
+    printw("%i ", test_converted_ht13[1][0][i]);
+  }
+  printw("\n");
+    printw("TIME: %d", time_converted_ht13[1][0]);
+    printw("\n");
+    */
+//take the information in the array and make a uint8_t insert_name[108] array out of it
+//test_converted_ht13[address] = color_value;
+
+//incorporate the timers for how long each part should be displayed
+//for (int i = 0; glasses_information[i]; i++)
+//printw("%c", glasses_information[i]);
+
+free(glasses_information);
   printw("Hello, welcome to Ben's Halftime Toolkit!\n");
   printw("a=twinkle routine; r=red flash; e=green flash; b=blue flash\n");
   printw("d=dark; g=gold flash;  w=white flash; t=test\n");
@@ -856,9 +979,11 @@ if(two_devices == true) {
   printw("(=slow marqee one way; )=slow marqee the other;\n");
   printw("1=snowman1; 2=snowman2; 3=tree1; 4=tree2;\n");
   printw("= is the new byte test\n");
+  printw("5 is the converted file test");
   printw("\n");
   printw(" comma key <,> to stop loop\n");
   printw(" dot key <.> to quit");
+
 
   // loop until a '.' character is detected
   do {
@@ -867,8 +992,55 @@ if(two_devices == true) {
 	  printw("%c",(letter==-1 ? ' ' : letter));
 	  move(15,0);
 	  refresh();
+    //adjusting statements to try automatically generated patterns from reading from file.
+    int q = 0;
+    if((47 < letter) && (letter < 58))
+    {
+      q = 0;
+      //begin by writing the first pattern to the ftdi devices
+      while (time_converted_ht13[letter-48][q] != -1)
+      {
+        //printw("%d ", q);
+      usleep(40000);
+      nbytes = ftdi_write_data(ftdi, test_converted_ht13[letter-48][q], m);
+      //sleep for amount of time for specified pattern for the amount of time the pattern is to stay on
+      usleep(time_converted_ht13[letter-48][q]);
+      q++;
+      nbytes = ftdi_write_data(ftdi, dbytePack, m);
+      usleep(40000);
+      }
+    }
+    else  {
     switch(letter) {
 
+case '6': // function to play pattern
+      do {
+        nbytes = ftdi_write_data(ftdi, test_converted_ht13[1][0], m);
+        if(two_devices == true) {
+          nbytes = ftdi_write_data(ftdi_2, testPack_2, m);
+        }
+        //printf("%ld\n", m);
+        usleep(DOT);
+      } while (getch() != ',');  
+      nbytes = ftdi_write_data(ftdi, dbytePack, m);
+      if(two_devices == true) {
+        nbytes = ftdi_write_data(ftdi_2, dbytePack, m);
+      }
+      break;
+    case '5': // function to play pattern
+      do {
+        nbytes = ftdi_write_data(ftdi, test_converted_ht13[0][0], m);
+        if(two_devices == true) {
+          nbytes = ftdi_write_data(ftdi_2, testPack_2, m);
+        }
+        //printf("%ld\n", m);
+        usleep(DOT);
+      } while (getch() != ',');  
+      nbytes = ftdi_write_data(ftdi, dbytePack, m);
+      if(two_devices == true) {
+        nbytes = ftdi_write_data(ftdi_2, dbytePack, m);
+      }
+      break;
     case 'b':  // blue flash
       nbytes = ftdi_write_data(ftdi, bluePack, m);
       usleep(DAB);
@@ -1295,6 +1467,7 @@ if(two_devices == true) {
     default:
       usleep(DAB);
     }
+  }
     nbytes = ftdi_write_data(ftdi, dbytePack, m);
    // Draw a space over current character
     move(14,0);
@@ -1351,4 +1524,82 @@ static size_t getEncodedBufferSize(size_t sourceSize) {
 
 bool find_ftdi()  {
 
+}
+
+//glasses_information will contain an entire files worth of text.
+uint8_t create_patterns(char *glasses_information, uint8_t ***test_converted_ht13, int **time_converted_ht13, int z)  {
+  for (int i = 0; i < 108; i++) {
+    test_converted_ht13[z][0][i] = 0;
+  }
+  int current_pattern = 0;
+  for (int i = 0; i < strlen(glasses_information); i++)
+  {
+    //find the address
+    int address = 0;
+    if((47 < glasses_information[i]) && (glasses_information[i] < 58))  {
+      address = glasses_information[i] - 48;
+      while((47 < glasses_information[i+1]) && (glasses_information[i+1] < 58))  {
+        address = (address * 10) + (glasses_information[i+1] - 48);
+        i++;
+        if((47 < glasses_information[i+1]) && (glasses_information[i+1] < 58))  {
+          address = (address * 10) + (glasses_information[i+1] - 48);
+          i++;
+        }
+    
+      }
+      if(glasses_information[i+1] == 41)  {
+        time_converted_ht13[z][current_pattern] = address;
+        printw("\n %d \n", address);
+        printw("\n %d \n", time_converted_ht13[0][current_pattern]);
+        current_pattern++;
+        time_converted_ht13[z][current_pattern + 1] = -1;
+        for (int p = 0; p < 108; p++) {
+          test_converted_ht13[z][current_pattern][p] = 0;
+        }
+      }
+      else  {
+        //figure out what color
+        int color = 0;
+        i = i + 2;
+        //if its red then 111000000
+        if(glasses_information[i] == 114) {
+          color = 224;
+        }
+        //if its green then 000111000
+        if(glasses_information[i] == 103) {
+          color = 28;
+        }
+        //if its blue then 000000111
+        if(glasses_information[i] == 98) {
+          color = 3;
+        }
+        //if its white then 11111111
+        if(glasses_information[i] == 119) {
+          color = 0b11111111;
+        }
+        test_converted_ht13[z][current_pattern][address] = color;
+        color = 0;
+        //printw("%i ", test_converted_ht13[address]);
+      }
+    }
+    address = 0;
+  }
+}
+
+// when returning 1, scandir will put this dirent into the list
+static int parse_ext(const struct dirent *dir)
+{
+  if(!dir)
+    return 0;
+
+  if(dir->d_type == DT_REG) {
+    const char *ext = strrchr(dir->d_name,'.');
+    if((!ext) || ext == dir->d_name)
+      return 0;
+    else  {
+      if(strcmp(ext, ".ht13") == 0)
+      return 1;
+    }
+  }
+  return 0;
 }
