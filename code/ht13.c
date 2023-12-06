@@ -24,8 +24,8 @@
 #include <string.h>
 #include <dirent.h>
 #include <unistd.h>
-/* #include <time.h> */
-/* #include <sys/times.h> */
+#include <time.h> 
+//#include <sys/times.h>
 #include <curses.h>
 
 #define DOT   100000
@@ -924,7 +924,7 @@ for (int i = 0; i < z; i++)
 int pattern_total = 0;
 //for all ht13 files make a pattern
 while (z--) {
-    printw("%s\n", namelist[z]->d_name);
+    //printw("%s\n", namelist[z]->d_name);
 
 
   fp = fopen ( namelist[z]->d_name , "r" );
@@ -946,11 +946,11 @@ while (z--) {
   create_patterns(glasses_information, test_converted_ht13, time_converted_ht13, z);
 }
 for (int i = 0; i < 108; i++) {
-    printw("%i ", test_converted_ht13[0][0][i]);
+    //printw("%i ", test_converted_ht13[0][0][i]);
 }
-    printw("\n");
-    printw("TIME: %d pattern 1, %d pattern 2", time_converted_ht13[0][0], time_converted_ht13[0][1]);
-    printw("\n");
+    //printw("\n");
+    //printw("TIME: %d pattern 1, %d pattern 2", time_converted_ht13[0][0], time_converted_ht13[0][1]);
+    //printw("\n");
   /*for (int i = 0; i < 108; i++) {
     printw("%i ", test_converted_ht13[1][0][i]);
   }
@@ -998,16 +998,28 @@ free(glasses_information);
     {
       q = 0;
       //begin by writing the first pattern to the ftdi devices
-      while (time_converted_ht13[letter-48][q] != -1)
+      int loop = 0;
+      clock_t start, current;
+
+      while ((time_converted_ht13[letter-48][q] != -1))
       {
         //printw("%d ", q);
-      usleep(40000);
+      usleep(20000);
+      start = clock();
       nbytes = ftdi_write_data(ftdi, test_converted_ht13[letter-48][q], m);
       //sleep for amount of time for specified pattern for the amount of time the pattern is to stay on
-      usleep(time_converted_ht13[letter-48][q]);
+      //make the sleep interruptable no matter how long it is by checking for getch()
+        long elapsed = 0;
+        current = clock();
+        printw("%d %d", current, test_converted_ht13[letter-48][q]);
+        while ((elapsed) < time_converted_ht13[letter-48][q] && getch() != ',')
+        {
+          current = clock();
+          elapsed = ((double)current - start) / CLOCKS_PER_SEC * 1000;
+        }
       q++;
       nbytes = ftdi_write_data(ftdi, dbytePack, m);
-      usleep(40000);
+      usleep(20000);
       }
     }
     else  {
@@ -1549,8 +1561,8 @@ uint8_t create_patterns(char *glasses_information, uint8_t ***test_converted_ht1
       }
       if(glasses_information[i+1] == 41)  {
         time_converted_ht13[z][current_pattern] = address;
-        printw("\n %d \n", address);
-        printw("\n %d \n", time_converted_ht13[0][current_pattern]);
+        //printw("\n %d \n", address);
+        //printw("\n %d \n", time_converted_ht13[0][current_pattern]);
         current_pattern++;
         time_converted_ht13[z][current_pattern + 1] = -1;
         for (int p = 0; p < 108; p++) {
