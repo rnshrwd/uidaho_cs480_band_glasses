@@ -120,18 +120,27 @@ void setColor(int colorVal)
 
   Serial.println(colorVal);
   if(colorVal == 255) {
-    SoftPWMSet(redPin, red);
-  SoftPWMSet(greenPin, green);
-  analogWrite(bluePin, blue);
     return;
   }
+
+  red = colorVal & 0b11100000;
+  red = (red >> 5);
+  red = red * 36;
+
+  green = colorVal & 0b00011100;
+  green = (green >> 2);
+  green = green *36;
+
+  blue = colorVal & 0b00000011;
+  blue = blue * 85;
+  
 
   // color selection based on case statement
   int pickcolor = colorVal;
 
   //Set brightness of colors, values 1-255. (where 1 is the lowest, and 255 is the highest) 
   int brightness = 10;
- 
+ /*
  switch (pickcolor) { 
     
  case 224: //224 = Red
@@ -154,12 +163,10 @@ void setColor(int colorVal)
   case 227: // 224+3 = 227 purple/magenta
     red = brightness;
     blue = brightness;
-    break;
 
   case 31:  // 28+3 = 31 cyan
     blue = brightness;
     green = brightness;
-    break;
           
  default: 
     red = 0; 
@@ -167,6 +174,7 @@ void setColor(int colorVal)
     blue = 0;   
     break; 
   } 
+  */
 
 
   SoftPWMSet(redPin, red);
