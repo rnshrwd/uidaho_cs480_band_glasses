@@ -42,6 +42,10 @@ long millisec();
 uint8_t sorc[108] = { };
 uint8_t dest[108] = { };
 
+uint8_t convert_red(int);
+uint8_t convert_green(int);
+uint8_t convert_blue(int);
+
 uint8_t create_patterns(char *glasses_information, uint8_t***, int**, int z); 
 static int parse_ext(const struct dirent *dir);
 
@@ -1004,6 +1008,7 @@ free(glasses_information);
       while ((time_converted_ht13[letter-48][q] != -1))
       {
         //printw("%d ", q);
+      //The code just breaks without this usleep. I do not understand.
       usleep(20000);
       start = clock();
       nbytes = ftdi_write_data(ftdi, test_converted_ht13[letter-48][q], m);
@@ -1011,7 +1016,7 @@ free(glasses_information);
       //make the sleep interruptable no matter how long it is by checking for getch()
         long elapsed = 0;
         current = clock();
-        printw("%d %d", current, test_converted_ht13[letter-48][q]);
+        //printw("%d %d", current, test_converted_ht13[letter-48][q]);
         while ((elapsed) < time_converted_ht13[letter-48][q] && getch() != ',')
         {
           current = clock();
@@ -1538,11 +1543,114 @@ bool find_ftdi()  {
 
 }
 
+uint8_t convert_blue(int color) 
+{
+  int picked = 0;
+  uint8_t color_options[4] = {0, 85, 170, 255};
+  for( int i = 0; i < 4; i++) {
+    if(abs(color_options[i] - color) < 43)
+      picked = i;
+  }
+  switch(picked)
+  {
+    case 0:
+      return 0b00000000;
+      break;
+    case 1:
+      return 0b00000001;
+      break;
+    case 2:
+      return 0b00000010;
+      break;
+    case 3:
+      return 0b00000011;
+      break;
+  }
+}
+
+uint8_t convert_green(int color)
+{
+  int picked = 0;
+  uint8_t color_options[8] = {0, 37, 74, 111, 148, 185, 222, 255};
+  for (int i = 0; i < 8; i++) {
+    if(abs(color_options[i] - color) < 19)
+      picked = i;
+  }
+  switch(picked)
+  {
+    case 0:
+      return 0b00000000;
+      break;
+    case 1:
+      return 0b00000100;
+      break;
+    case 2:
+      return 0b00001000;
+      break;
+    case 3:
+      return 0b00001100;
+      break;
+    case 4:
+      return 0b00010000;
+      break;
+    case 5:
+      return 0b00010100;
+      break;
+    case 6:
+      return 0b00011000;
+      break;
+    case 7:
+      return 0b00011100;
+      break;
+  }
+}
+
+uint8_t convert_red(int color)
+{
+  int picked = 0;
+  uint8_t color_options[8] = {0, 37, 74, 111, 148, 185, 222, 255};
+  for (int i = 0; i < 8; i++) {
+    if(abs(color_options[i] - color) < 19)
+      picked = i;
+  }
+  switch(picked)
+  {
+    case 0:
+      return 0b00000000;
+      break;
+    case 1:
+      return 0b00100000;
+      break;
+    case 2:
+      return 0b01000000;
+      break;
+    case 3:
+      return 0b01100000;
+      break;
+    case 4:
+      return 0b10000000;
+      break;
+    case 5:
+      return 0b10100000;
+      break;
+    case 6:
+      return 0b11000000;
+      break;
+    case 7:
+      return 0b11100000;
+      break;
+  }
+}
+
 //glasses_information will contain an entire files worth of text.
 uint8_t create_patterns(char *glasses_information, uint8_t ***test_converted_ht13, int **time_converted_ht13, int z)  {
   for (int i = 0; i < 108; i++) {
     test_converted_ht13[z][0][i] = 0;
   }
+  uint8_t converted_red = 0;
+  uint8_t converted_green = 0;
+  uint8_t converted_blue = 0;
+  uint8_t rgb_color = 0;
   int current_pattern = 0;
   for (int i = 0; i < strlen(glasses_information); i++)
   {
@@ -1573,25 +1681,36 @@ uint8_t create_patterns(char *glasses_information, uint8_t ***test_converted_ht1
         //figure out what color
         int color = 0;
         i = i + 2;
-        //if its red then 111000000
-        if(glasses_information[i] == 114) {
-          color = 224;
+        //Red coloring is found by checking number until seperated by a "["
+        converted_red = 0;
+        converted_green = 0;
+        converted_blue = 0;
+        rgb_color = 0;
+        while(glasses_information[i] != 91) {
+          color = (color * 10) + (glasses_information[i] - 48);
+          i++;
         }
-        //if its green then 000111000
-        if(glasses_information[i] == 103) {
-          color = 28;
-        }
-        //if its blue then 000000111
-        if(glasses_information[i] == 98) {
-          color = 3;
-        }
-        //if its white then 11111111
-        if(glasses_information[i] == 119) {
-          color = 0b11111111;
-        }
-        test_converted_ht13[z][current_pattern][address] = color;
+        converted_red = convert_red(color);
         color = 0;
-        //printw("%i ", test_converted_ht13[address]);
+        i++;
+        while(glasses_information[i] != 91) {
+          color = (color * 10) + (glasses_information[i] - 48);
+          i++;
+        }
+        converted_green = convert_green(color);
+        color = 0;
+        i++;
+        while(glasses_information[i] != 124)  {
+          color = (color * 10) + (glasses_information[i] - 48);
+          i++;
+        }
+        converted_blue = convert_blue(color);
+        color = 0;
+        rgb_color = converted_red + converted_green + converted_blue;
+        //use a function to condense this result into three bits to find red
+
+        test_converted_ht13[z][current_pattern][address] = rgb_color;
+        color = 0;
       }
     }
     address = 0;
