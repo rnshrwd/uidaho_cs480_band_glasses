@@ -926,6 +926,10 @@ for (int i = 0; i < z; i++)
 }
 
 int pattern_total = 0;
+char keybind[30];
+for (int i = 0; i < 30; i++)  {
+  keybind[i] = 'N';
+}
 //for all ht13 files make a pattern
 while (z--) {
     //printw("%s\n", namelist[z]->d_name);
@@ -945,6 +949,10 @@ while (z--) {
   /* copy the file into the buffer */
   if( 1!=fread( glasses_information , lSize, 1 , fp) )
     fclose(fp),free(glasses_information),fputs("entire read fails",stderr),exit(1);
+
+  int keybind_location = strlen(glasses_information);
+  keybind[z] = glasses_information[keybind_location-1];
+  printw("\n%c\n", keybind[z]);
 
   //This should be looped based on which file the program is on.
   create_patterns(glasses_information, test_converted_ht13, time_converted_ht13, z);
@@ -971,24 +979,15 @@ for (int i = 0; i < 108; i++) {
 
 free(glasses_information);
   printw("Hello, welcome to Ben's Halftime Toolkit!\n");
-  printw("a=twinkle routine; r=red flash; e=green flash; b=blue flash\n");
-  printw("d=dark; g=gold flash;  w=white flash; t=test\n");
-  printw("n=gold on; o=white on; v=orange\n");
-  printw("m=magenta; y=yellow flash;  k=cyan flash\n");
-  printw("c=christmas sparkle;  k=cyan flash\n");
-  printw("f=twink8; h=twink9; j=twink10; l= twink11\n");
-  printw("s=rainbow short;  p=rainbow med\n");
-  printw("q=sparkle; x=XMas solid; z=slow twinkle\n");
-  printw("[=marqee one way; ]=marqee the other;\n");
-  printw("(=slow marqee one way; )=slow marqee the other;\n");
-  printw("1=snowman1; 2=snowman2; 3=tree1; 4=tree2;\n");
   printw("= is the new byte test\n");
   printw("5 is the converted file test");
   printw("\n");
   printw(" comma key <,> to stop loop\n");
   printw(" dot key <.> to quit");
 
-
+  int q = 0;
+  int key_pressed = 0;
+  bool is_valid = false;
   // loop until a '.' character is detected
   do {
     letter = getch();
@@ -997,27 +996,38 @@ free(glasses_information);
 	  move(15,0);
 	  refresh();
     //adjusting statements to try automatically generated patterns from reading from file.
-    int q = 0;
-    if((47 < letter) && (letter < 58))
+    q = 0;
+    key_pressed = 0;
+    is_valid = false;
+    for(int i = 0; keybind[i]; i++)
+    {
+      if(letter == keybind[i])
+      {
+        is_valid = true;
+        key_pressed = i;
+        printw("%d", key_pressed);
+      }
+    }
+    if(is_valid == true)
     {
       q = 0;
       //begin by writing the first pattern to the ftdi devices
       int loop = 0;
       clock_t start, current;
 
-      while ((time_converted_ht13[letter-48][q] != -1))
+      while ((time_converted_ht13[key_pressed][q] != -1))
       {
         //printw("%d ", q);
       //The code just breaks without this usleep. I do not understand.
       usleep(20000);
       start = clock();
-      nbytes = ftdi_write_data(ftdi, test_converted_ht13[letter-48][q], m);
+      nbytes = ftdi_write_data(ftdi, test_converted_ht13[key_pressed][q], m);
       //sleep for amount of time for specified pattern for the amount of time the pattern is to stay on
       //make the sleep interruptable no matter how long it is by checking for getch()
         long elapsed = 0;
         current = clock();
         //printw("%d %d", current, test_converted_ht13[letter-48][q]);
-        while ((elapsed) < time_converted_ht13[letter-48][q] && getch() != ',')
+        while ((elapsed) < time_converted_ht13[key_pressed][q] && getch() != ',')
         {
           current = clock();
           elapsed = ((double)current - start) / CLOCKS_PER_SEC * 1000;
