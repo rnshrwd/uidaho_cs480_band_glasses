@@ -16,6 +16,12 @@
  * Some minor edits/cleanup by Lucas Jackson
  * University of Idaho
  * 10/27/2020
+ * 
+ * Jeremy Wisecarver
+ * University of Idaho
+ * 12/14/23
+ * added ht13 file reading and seperate app to create said files
+ * 
  */
 
 #include <ftdi.h>
@@ -46,7 +52,7 @@ uint8_t convert_red(int);
 uint8_t convert_green(int);
 uint8_t convert_blue(int);
 
-uint8_t create_patterns(char *glasses_information, uint8_t***, int**, int z); 
+uint8_t create_patterns(char *glasses_information, uint8_t***, uint8_t***, int**, int z); 
 static int parse_ext(const struct dirent *dir);
 
 void rotate13 (uint8_t arr[]);
@@ -300,6 +306,7 @@ else  {
 // For the information being collected there are z blocks of 2-d arrays, 30 rows max of patterns and 108 addresses per pattern.
 //Allocate memory blocks based on number of files here **********************************
 uint8_t ***test_converted_ht13 = (uint8_t***)malloc(z * sizeof(uint8_t**));
+uint8_t ***test_converted_2_ht13 = (uint8_t***)malloc(z * sizeof(uint8_t**));
 if (test_converted_ht13 == NULL)
 {
   fprintf(stderr, "Not enough memory available");
@@ -310,7 +317,8 @@ for (int i = 0; i < z; i++)
 {
   //30 is used here as a placeholder for maximum number of patterns allowed.
   test_converted_ht13[i] = (uint8_t**)malloc(30 * sizeof(uint8_t*));
-  if (test_converted_ht13[i] == NULL)
+  test_converted_2_ht13[i] = (uint8_t**)malloc(30 * sizeof(uint8_t*));
+  if ((test_converted_ht13[i] == NULL) || (test_converted_2_ht13[i] == NULL))
   {
     fprintf(stderr, "Not enough memory available");
     exit(0);
@@ -319,7 +327,8 @@ for (int i = 0; i < z; i++)
   for (int q = 0; q < 110; q++)
   {
     test_converted_ht13[i][q] = (uint8_t*)malloc(108 * sizeof(uint8_t));
-    if (test_converted_ht13[i][q] == NULL)  
+    test_converted_2_ht13[i][q] = (uint8_t*)malloc(108 * sizeof(uint8_t));
+    if ((test_converted_ht13[i][q] == NULL) || (test_converted_2_ht13[i][q] == NULL))  
     {
       fprintf(stderr, "Out of memory");
       exit(0);
@@ -377,7 +386,7 @@ while (z--) {
   printw("%c for file: %s\n", keybind[z], namelist[z]->d_name);
 
   //This should be looped based on which file the program is on.
-  create_patterns(glasses_information, test_converted_ht13, time_converted_ht13, z);
+  create_patterns(glasses_information, test_converted_ht13, test_converted_2_ht13, time_converted_ht13, z);
 }
 free(glasses_information);
   
@@ -422,6 +431,10 @@ free(glasses_information);
       usleep(20000);
       start = clock();
       nbytes = ftdi_write_data(ftdi, test_converted_ht13[key_pressed][q], m);
+      if(two_devices == true) {
+        nbytes = ftdi_write_data(ftdi_2, test_converted_2_ht13[key_pressed][q], m);
+      }
+      
       //sleep for amount of time for specified pattern for the amount of time the pattern is to stay on
       //make the sleep interruptable no matter how long it is by checking for getch()
         long elapsed = 0;
@@ -434,6 +447,9 @@ free(glasses_information);
         }
       q++;
       nbytes = ftdi_write_data(ftdi, dbytePack, m);
+      if(two_devices == true)  {
+        nbytes = ftdi_write_data(ftdi_2, dbytePack, m);
+      }
       usleep(20000);
       }
     }
@@ -500,6 +516,8 @@ bool find_ftdi()  {
 
 }
 
+//Because we have less bits to work with we must estimate color intensity
+//Two bits for blue
 uint8_t convert_blue(int color) 
 {
   int picked = 0;
@@ -525,6 +543,8 @@ uint8_t convert_blue(int color)
   }
 }
 
+//Because we have less bits to work with we must estimate color intensity
+//Three bits for green
 uint8_t convert_green(int color)
 {
   int picked = 0;
@@ -562,6 +582,8 @@ uint8_t convert_green(int color)
   }
 }
 
+//Because we have less bits to work with we must estimate color intensity
+//Three bits for red
 uint8_t convert_red(int color)
 {
   int picked = 0;
@@ -600,9 +622,10 @@ uint8_t convert_red(int color)
 }
 
 //glasses_information will contain an entire files worth of text.
-uint8_t create_patterns(char *glasses_information, uint8_t ***test_converted_ht13, int **time_converted_ht13, int z)  {
+uint8_t create_patterns(char *glasses_information, uint8_t ***test_converted_ht13, uint8_t ***test_converted_2_ht13, int **time_converted_ht13, int z)  {
   for (int i = 0; i < 108; i++) {
     test_converted_ht13[z][0][i] = 0;
+    test_converted_2_ht13[z][0][i] = 0;
   }
   uint8_t converted_red = 0;
   uint8_t converted_green = 0;
@@ -627,6 +650,7 @@ uint8_t create_patterns(char *glasses_information, uint8_t ***test_converted_ht1
         time_converted_ht13[z][current_pattern + 1] = -1;
         for (int p = 0; p < 108; p++) {
           test_converted_ht13[z][current_pattern][p] = 0;
+          test_converted_2_ht13[z][current_pattern][p] = 0;
         }
       }
       else  {
@@ -660,8 +684,13 @@ uint8_t create_patterns(char *glasses_information, uint8_t ***test_converted_ht1
         color = 0;
         rgb_color = converted_red + converted_green + converted_blue;
         //use a function to condense this result into three bits to find red
-
-        test_converted_ht13[z][current_pattern][address] = rgb_color;
+        if(address < 100) {
+          test_converted_ht13[z][current_pattern][address] = rgb_color;
+        }
+        else  {
+          test_converted_2_ht13[z][current_pattern][address-100] = rgb_color;
+        }
+        
         color = 0;
       }
     }
