@@ -65,6 +65,7 @@ int main() {
   char manufacturer[128], description[128];
   int retval = EXIT_SUCCESS;
   char letter;
+  //char letter;
   int i = 0;
   int j = 0;
   int k = 0;
@@ -229,7 +230,7 @@ int main() {
   if (ret < 0) {
     fprintf(stderr, "unable to set baud rate: %d (%s).\n", ret, ftdi_get_error_string(ftdi));
   } else {
-    printf("baudrate set.\n");
+    //printf("baudrate set.\n");
   }
 
 if(two_devices == true) {
@@ -247,14 +248,14 @@ if(two_devices == true) {
     if (ret < 0) {
     fprintf(stderr, "unable to set baud rate: %d (%s).\n", ret, ftdi_get_error_string(ftdi_2));
     } else {
-      printf("baudrate set.\n");
+      //printf("baudrate set.\n");
     }
 
     f = ftdi_set_line_property(ftdi_2, 8, STOP_BIT_1, NONE);
     if(f < 0) {
       fprintf(stderr, "unable to set line parameters: %d (%s).\n", ret, ftdi_get_error_string(ftdi));
     } else {
-      printf("line parameters set.\n");
+      //printf("line parameters set.\n");
     }
   }
 
@@ -264,7 +265,7 @@ if(two_devices == true) {
   if(f < 0) {
     fprintf(stderr, "unable to set line parameters: %d (%s).\n", ret, ftdi_get_error_string(ftdi));
   } else {
-    printf("line parameters set.\n");
+    //printf("line parameters set.\n");
   }
   
 
@@ -272,7 +273,7 @@ if(two_devices == true) {
   if(two_devices == true) {
     ftdi_list_free(&devlist_2);
   }
-  printf("broadcasting.\n");
+  //printf("broadcasting.\n");
 
   FILE * test_file = fopen("test_ht13", "r");
 
@@ -294,6 +295,7 @@ struct dirent **namelist;
 struct dirent **filtered_list;
 int z;
 
+
 z = scandir(".", &namelist, parse_ext, alphasort);
 if (z < 0) {
   perror("scandir");
@@ -302,6 +304,7 @@ if (z < 0) {
 else  {
 
 }
+
 //dimensions of the 3-d array
 // For the information being collected there are z blocks of 2-d arrays, 30 rows max of patterns and 108 addresses per pattern.
 //Allocate memory blocks based on number of files here **********************************
@@ -312,6 +315,7 @@ if (test_converted_ht13 == NULL)
   fprintf(stderr, "Not enough memory available");
   exit(0);
 } 
+
 
 for (int i = 0; i < z; i++)
 {
@@ -324,10 +328,10 @@ for (int i = 0; i < z; i++)
     exit(0);
   }
   //110 slots of memory are available to enable reading of the time.
-  for (int q = 0; q < 110; q++)
+  for (int q = 0; q < 30; q++)
   {
-    test_converted_ht13[i][q] = (uint8_t*)malloc(108 * sizeof(uint8_t));
-    test_converted_2_ht13[i][q] = (uint8_t*)malloc(108 * sizeof(uint8_t));
+    test_converted_ht13[i][q] = (uint8_t*)malloc(110 * sizeof(uint8_t));
+    test_converted_2_ht13[i][q] = (uint8_t*)malloc(110 * sizeof(uint8_t));
     if ((test_converted_ht13[i][q] == NULL) || (test_converted_2_ht13[i][q] == NULL))  
     {
       fprintf(stderr, "Out of memory");
@@ -335,6 +339,8 @@ for (int i = 0; i < z; i++)
     }
   }
 }
+
+
 //Allocate memory in the same way to hold the time values minus the step involving an extra 108 slots
 int *time_converted_ht13[z];
 
@@ -360,14 +366,20 @@ char keybind[30];
 for (int i = 0; i < 30; i++)  {
   keybind[i] = 'N';
 }
+
+
 //for all ht13 files make a pattern
 printw("Hello, welcome to Ben's Halftime Toolkit!\n");
+
 while (z--) {
-    //printw("%s\n", namelist[z]->d_name);
 
-
+printf("%i ", z);
   fp = fopen ( namelist[z]->d_name , "r" );
-  if( !fp ) perror("ht13 file failed to open"),exit(1);
+  if( !fp ) 
+    {
+      printf("The file: %s does not exist\n", namelist[z]->d_name);
+      perror("ht13 file failed to open"),exit(1);
+    }
 
   fseek( fp , 0L , SEEK_END);
   lSize = ftell( fp );
@@ -386,9 +398,12 @@ while (z--) {
   printw("%c for file: %s\n", keybind[z], namelist[z]->d_name);
 
   //This should be looped based on which file the program is on.
+
   create_patterns(glasses_information, test_converted_ht13, test_converted_2_ht13, time_converted_ht13, z);
 }
+
 free(glasses_information);
+
   
   
   printw("\n");
@@ -412,7 +427,7 @@ free(glasses_information);
         //printw("%d", key_pressed);
       }
     }
-    letter = getch();
+    letter = getch();    
 	  move(15,0);
 	  printw("%c",(letter==-1 ? ' ' : letter));
 	  move(15,0);
@@ -463,7 +478,7 @@ free(glasses_information);
     //printw(" ");
     refresh();
   } while (letter != '.');
-  
+
   
   endwin();   // close curses session
   
@@ -623,7 +638,7 @@ uint8_t convert_red(int color)
 
 //glasses_information will contain an entire files worth of text.
 uint8_t create_patterns(char *glasses_information, uint8_t ***test_converted_ht13, uint8_t ***test_converted_2_ht13, int **time_converted_ht13, int z)  {
-  for (int i = 0; i < 108; i++) {
+  for (int i = 0; i < 110; i++) {
     test_converted_ht13[z][0][i] = 0;
     test_converted_2_ht13[z][0][i] = 0;
   }
