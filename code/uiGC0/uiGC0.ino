@@ -116,7 +116,7 @@ void setColor(int colorVal)
   //To make this work with a single integer we use AND statements and bit shifting.
   //Given this byte: 11111111
   //rrrgggbb 
-  //r = red color values: g = green color values: b = blue color values
+  //r = red color val).ues: g = green color values: b = blue color values
 
   Serial.println(colorVal);
   if(colorVal == 255) {

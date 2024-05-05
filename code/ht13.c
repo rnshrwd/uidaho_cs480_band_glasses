@@ -41,6 +41,7 @@
 #define DROOL 1000000
 #define DAB   50000
 #define SLP   40000
+#define MAXPATTERNS 30
 
 //static size_t encode(const uint8_t* source, size_t size, uint8_t* destination);
 static size_t getEncodedBufferSize(size_t sourceSize);
@@ -319,9 +320,9 @@ if (test_converted_ht13 == NULL)
 
 for (int i = 0; i < z; i++)
 {
-  //30 is used here as a placeholder for maximum number of patterns allowed.
-  test_converted_ht13[i] = (uint8_t**)malloc(30 * sizeof(uint8_t*));
-  test_converted_2_ht13[i] = (uint8_t**)malloc(30 * sizeof(uint8_t*));
+  //Max patterns is the maximum number of patterns that will be taken, the number is currently arbitrary
+  test_converted_ht13[i] = (uint8_t**)malloc(MAXPATTERNS * sizeof(uint8_t*));
+  test_converted_2_ht13[i] = (uint8_t**)malloc(MAXPATTERNS * sizeof(uint8_t*));
   if ((test_converted_ht13[i] == NULL) || (test_converted_2_ht13[i] == NULL))
   {
     fprintf(stderr, "Not enough memory available");
@@ -353,7 +354,7 @@ if (time_converted_ht13 == NULL)
 for (int i = 0; i < z; i++)
 {
   //30 is used here as a placeholder for maximum number of patterns allowed.
-  time_converted_ht13[i] = (int*)malloc(30 * sizeof(int));
+  time_converted_ht13[i] = (int*)malloc(MAXPATTERNS * sizeof(int));
   if (time_converted_ht13[i] == NULL)
   {
     fprintf(stderr, "Not enough memory available");
@@ -371,6 +372,7 @@ for (int i = 0; i < 30; i++)  {
 //for all ht13 files make a pattern
 printw("Hello, welcome to Ben's Halftime Toolkit!\n");
 
+//While loop executes once per file
 while (z--) {
 
 printf("%i ", z);
@@ -398,8 +400,9 @@ printf("%i ", z);
   printw("%c for file: %s\n", keybind[z], namelist[z]->d_name);
 
   //This should be looped based on which file the program is on.
-
+  //Create the patterns the transmitters will output.
   create_patterns(glasses_information, test_converted_ht13, test_converted_2_ht13, time_converted_ht13, z);
+  fclose(fp);
 }
 
 free(glasses_information);
@@ -428,8 +431,14 @@ free(glasses_information);
       }
     }
     letter = getch();    
+    //replace the letter if we are still in loop
 	  move(15,0);
-	  printw("%c",(letter==-1 ? ' ' : letter));
+    if(((97 <= letter) && (letter <= 122)) || letter == 44)
+    {
+      //refresh();
+	    //printw("%c",(letter==-1 ? ' ' : letter));
+      printw("%c", letter);
+    }
 	  move(15,0);
     //adjusting statements to try automatically generated patterns from reading from file.
     if(is_valid == true)
@@ -441,7 +450,6 @@ free(glasses_information);
 
       while ((time_converted_ht13[key_pressed][q] != -1))
       {
-        //printw("%d ", q);
       //The code just breaks without this usleep. I do not understand.
       usleep(20000);
       start = clock();
@@ -454,7 +462,6 @@ free(glasses_information);
       //make the sleep interruptable no matter how long it is by checking for getch()
         long elapsed = 0;
         current = clock();
-        //printw("%d %d", current, test_converted_ht13[letter-48][q]);
         while ((elapsed) < time_converted_ht13[key_pressed][q] && getch() != ',')
         {
           current = clock();
@@ -474,9 +481,9 @@ free(glasses_information);
     }
     nbytes = ftdi_write_data(ftdi, dbytePack, m);
    // Draw a space over current character
-    move(14,0);
+    //move(14,0);
     //printw(" ");
-    refresh();
+    //refresh();
   } while (letter != '.');
 
   
@@ -659,8 +666,6 @@ uint8_t create_patterns(char *glasses_information, uint8_t ***test_converted_ht1
       }
       if(glasses_information[i+1] == 41)  {
         time_converted_ht13[z][current_pattern] = address;
-        //printw("\n %d \n", address);
-        //printw("\n %d \n", time_converted_ht13[0][current_pattern]);
         current_pattern++;
         time_converted_ht13[z][current_pattern + 1] = -1;
         for (int p = 0; p < 108; p++) {
